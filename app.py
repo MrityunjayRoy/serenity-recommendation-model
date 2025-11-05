@@ -32,6 +32,8 @@ def get_recommendations(mood_id: int):
 # --- 3. Flask Routes ---
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    recommendations = pd.Series()
+
     if request.method == 'POST':
         selected_mood_json = request.get_json()
         selected_mood: int = selected_mood_json['mood']
