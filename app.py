@@ -1,6 +1,7 @@
 import pandas as pd
 from flask import Flask, jsonify, request
 import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
 
@@ -15,7 +16,7 @@ except FileNotFoundError:
     df_mood = pd.DataFrame() # Create an empty DataFrame to prevent app crash
 
 # --- 2. Recommendation Logic ---
-def get_recommendations(mood_id: int):
+def get_songs(mood_id: int):
     if df_mood.empty:
         return ["Data not loaded. Check server logs."]
 
@@ -29,18 +30,37 @@ def get_recommendations(mood_id: int):
 
     return recommended_songs
 
+def get_similar_songs(song):
+    if song['song_name'] in df_mood['song_name'].values:
+        song_features = df_mood.loc[df_mood['song_name'] == song['song_name'], ['energy', 'valence']].values.flatten()
+        all_song_features = df_mood[['energy', 'valence']].values
+
+        similarities = cosine_similarity([song_features], all_song_features)
+        sim_songs = pd.DataFrame({'song_name': df_mood['song_name'], 'similarity': similarities.flatten(), 'uri': df_mood['uri']})
+        sim_songs = sim_songs.sort_values(by = 'similarity', ascending=False).reset_index(drop=True)
+        sim_songs = sim_songs[sim_songs['song_name'] != song['song_name']]
+        top_sim_song = sim_songs.head(3)
+    
+    return top_sim_song
 # --- 3. Flask Routes ---
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    recommendations = pd.Series()
-
+    songs = pd.Series([])
     if request.method == 'POST':
         selected_mood_json = request.get_json()
         selected_mood: int = selected_mood_json['mood']
 
-        recommendations = get_recommendations(selected_mood)
+        songs = get_songs(selected_mood)
 
-    return jsonify(recommendations.to_dict('records'))
+    return jsonify(songs.to_dict('records'))
 
+@app.route('/song', methods=['POST'])
+def songs():
+    song = pd.Series()
+
+    selected_song = request.get_json()
+    sim_songs = get_similar_songs(selected_song)
+
+    return jsonify(sim_songs.to_dict('records'))
 if __name__ == '__main__':
     app.run(debug=True) 
