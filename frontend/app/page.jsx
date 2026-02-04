@@ -68,7 +68,7 @@ export default function Home() {
             <div className="mt-4 flex justify-center gap-4 text-xs font-medium text-zinc-400 dark:text-zinc-500">
               <p>Made with ❤️</p>
               <span>•</span>
-              <a href="#" className="hover:text-[#0097b2] transition-colors">Github</a>
+              <a href="https://github.com/MrityunjayRoy/serenity" className="hover:text-[#0097b2] transition-colors">Github</a>
             </div>
           </motion.div>
         </div>
